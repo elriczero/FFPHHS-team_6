@@ -108,8 +108,8 @@ class FFP:
             if (self.graph[i][j] == 1 and self.state[j] == -1):
               value = sum(self.graph[i])              
               break
-        elif (heuristic == "GDEG"):        
-          value = sum(self.graph[i])          
+        elif (heuristic == "GDEG"):
+          value = sum(self.graph[i])
         else:
           print("=====================")
           print("Critical error at FFP.__nextNode.")
