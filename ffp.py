@@ -202,6 +202,7 @@ class FFP:
         for i in range(len(self.state)):
             if (self.state[i] == 0):
                 if (heuristic == "LDEG"):
+                    print("LDEG")
                     # It prefers the node with the largest degree, but it only considers
                     # the nodes directly connected to a node on fire
                     for j in range(len(self.graph_m[i])):
@@ -210,6 +211,10 @@ class FFP:
                             break
                 elif (heuristic == "GDEG"):
                     value = sum(self.graph_m[i])
+                elif (heuristic == "BBG"):
+                    print("BBG\n")
+                    if i in self.backbone:
+                        value = sum(self.graph_m[i])
                 else:
                     print("=====================")
                     print("Critical error at FFP.__nextNode.")
@@ -405,6 +410,8 @@ problem = FFP(fileName)
 # problem.print_adjacency_list()
 
 print(problem.backbone)
+
+print("BBG = " + str(problem.solve("BBG", 1, True)))
 
 
 # print("GDEG = " + str(problem.solve("GDEG", 1, True)))
