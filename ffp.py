@@ -14,6 +14,7 @@ class FFP:
         tokens = text.split()
         seed = int(tokens.pop(0))
         self.n = int(tokens.pop(0))
+        self.debug_position = list(range(self.n))
         model = int(tokens.pop(0))
         int(tokens.pop(0))  # Ignored
         # self.state contains the state of each node
@@ -45,6 +46,8 @@ class FFP:
         t = 0
         while (spreading):
             if (debug):
+                print("Pos:  " + str(self.debug_position))
+                print("State:" + str(self.state))
                 print("Features")
                 print("")
                 print("Graph density: %1.4f" %
