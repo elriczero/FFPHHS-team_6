@@ -51,6 +51,68 @@ class FFP:
             for j in self.graph_l[i]:
                 print(" -> {}".format(j), end ="")
             print()
+    
+    '''A recursive function to print all paths from 'u' to 'd'.
+    visited[] keeps track of vertices in current path.
+    path[] stores actual vertices and path_index is current
+    index in path[]'''
+    def printAllPathsUtil(self, u, d, visited, path):
+ 
+        # Mark the current node as visited and store in path
+        visited[u]= True
+        path.append(u)
+ 
+        # If current vertex is same as destination, then print
+        # current path[]
+        if u == d:
+            print (path)
+        else:
+            # If current vertex is not destination
+            # Recur for all the vertices adjacent to this vertex
+            for i in self.graph_l[u]:
+                if visited[i]== False:
+                    self.printAllPathsUtil(i, d, visited, path)
+                     
+        # Remove current vertex from path[] and mark it as unvisited
+        path.pop()
+        visited[u]= False
+
+    # Prints all paths from 's' to 'd'
+    def printAllPaths(self, s, d):
+ 
+        # Mark all the vertices as not visited
+        visited =[False]*(self.n)
+ 
+        # Create an array to store paths
+        path = []
+ 
+        # Call the recursive helper function to print all paths
+        self.printAllPathsUtil(s, d, visited, path)
+
+    # A function used by DFS
+    def DFSUtil(self, v, visited):
+ 
+        # Mark the current node as visited
+        # and print it
+        visited.add(v)
+        print(v, end=' ')
+ 
+        # Recur for all the vertices
+        # adjacent to this vertex
+        for neighbour in self.graph_l[v]:
+            if neighbour not in visited:
+                self.DFSUtil(neighbour, visited)
+ 
+    # The function to do DFS traversal. It uses
+    # recursive DFSUtil()
+    def DFS(self, v):
+ 
+        # Create a set to store visited vertices
+        visited = set()
+ 
+        # Call the recursive helper function
+        # to print DFS traversal
+        self.DFSUtil(v, visited)
 
     # Solves the FFP by using a given method and a number of firefighters
     #   method = Either a string with the name of one available heuristic or an object of class HyperHeuristic
@@ -327,18 +389,22 @@ class DummyHyperHeuristic(HyperHeuristic):
 
 fileName = "instances/BBGRL/50_ep0.2_0_gilbert_1.in"
 # Solves the problem using heuristic LDEG and one firefighter
-problem = FFP(fileName)
-print("LDEG = " + str(problem.solve("LDEG", 1, False)))
+# problem = FFP(fileName)
+# print("LDEG = " + str(problem.solve("LDEG", 1, True)))
 
 # Solves the problem using heuristic GDEG and one firefighter
 problem = FFP(fileName)
-print("GDEG = " + str(problem.solve("GDEG", 1, False)))
+problem.print_adjacency_list()
 
-# Solves the problem using a randomly generated dummy hyper-heuristic
-problem = FFP(fileName)
-seed = random.randint(0, 1000)
-print(seed)
-hh = DummyHyperHeuristic(["EDGE_DENSITY", "BURNING_NODES", "NODES_IN_DANGER"], [
-                         "LDEG", "GDEG"], 2, seed)
-print(hh)
-print("Dummy HH = " + str(problem.solve(hh, 1, False)))
+problem.DFS(0)
+
+# print("GDEG = " + str(problem.solve("GDEG", 1, True)))
+
+# # Solves the problem using a randomly generated dummy hyper-heuristic
+# problem = FFP(fileName)
+# seed = random.randint(0, 1000)
+# print(seed)
+# hh = DummyHyperHeuristic(["EDGE_DENSITY", "BURNING_NODES", "NODES_IN_DANGER"], [
+#                          "LDEG", "GDEG"], 2, seed)
+# print(hh)
+# print("Dummy HH = " + str(problem.solve(hh, 1, True)))
