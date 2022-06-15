@@ -1,6 +1,6 @@
 import random
 import math
-
+from collections import defaultdict
 # Provides the methods to create and solve the firefighter problem
 
 
@@ -26,14 +26,31 @@ class FFP:
         for i in range(nbBurning):
             b = int(tokens.pop(0))
             self.state[b] = -1
-        self.graph = []
+        self.graph_m = []   # graph as an adjacency matrix
         for i in range(self.n):
-            self.graph.append([0] * self.n)
+            self.graph_m.append([0] * self.n)
         while tokens:
             x = int(tokens.pop(0))
             y = int(tokens.pop(0))
-            self.graph[x][y] = 1
-            self.graph[y][x] = 1
+            self.graph_m[x][y] = 1
+            self.graph_m[y][x] = 1
+        self.graph_l = self.convert_adjacency_matrix_to_list()    # graph as an adjacency list
+        
+    def convert_adjacency_matrix_to_list(self):
+        graph_m = self.graph_m
+        adjacency_l = defaultdict(list)
+        for i in range(len(graph_m)):
+            for j in range(len(graph_m[i])):
+                if graph_m[i][j] != 0:
+                    adjacency_l[i].append(j)
+        return adjacency_l
+
+    def print_adjacency_list(self):
+        for i in self.graph_l:
+            print(i, end ="")
+            for j in self.graph_l[i]:
+                print(" -> {}".format(j), end ="")
+            print()
 
     # Solves the FFP by using a given method and a number of firefighters
     #   method = Either a string with the name of one available heuristic or an object of class HyperHeuristic
@@ -70,9 +87,9 @@ class FFP:
                     # The node is protected
                     self.state[node] = 1
                     # The node is disconnected from the rest of the graph
-                    for j in range(len(self.graph[node])):
-                        self.graph[node][j] = 0
-                        self.graph[j][node] = 0
+                    for j in range(len(self.graph_m[node])):
+                        self.graph_m[node][j] = 0
+                        self.graph_m[j][node] = 0
                     if (debug):
                         print("\tt" + str(t) +
                               ": A firefighter protects node " + str(node))
@@ -82,14 +99,14 @@ class FFP:
             for i in range(len(state)):
                 # If the node is on fire, the fire propagates among its neighbors
                 if (state[i] == -1):
-                    for j in range(len(self.graph[i])):
-                        if (self.graph[i][j] == 1 and state[j] == 0):
+                    for j in range(len(self.graph_m[i])):
+                        if (self.graph_m[i][j] == 1 and state[j] == 0):
                             spreading = True
                             # The neighbor is also on fire
                             self.state[j] = -1
                             # The edge between the nodes is removed (it will no longer be used)
-                            self.graph[i][j] = 0
-                            self.graph[j][i] = 0
+                            self.graph_m[i][j] = 0
+                            self.graph_m[j][i] = 0
                             if (debug):
                                 print("\tt" + str(t) +
                                       ": Fire spreads to node " + str(j))
@@ -117,12 +134,12 @@ class FFP:
                 if (heuristic == "LDEG"):
                     # It prefers the node with the largest degree, but it only considers
                     # the nodes directly connected to a node on fire
-                    for j in range(len(self.graph[i])):
-                        if (self.graph[i][j] == 1 and self.state[j] == -1):
-                            value = sum(self.graph[i])
+                    for j in range(len(self.graph_m[i])):
+                        if (self.graph_m[i][j] == 1 and self.state[j] == -1):
+                            value = sum(self.graph_m[i])
                             break
                 elif (heuristic == "GDEG"):
-                    value = sum(self.graph[i])
+                    value = sum(self.graph_m[i])
                 else:
                     print("=====================")
                     print("Critical error at FFP.__nextNode.")
@@ -141,16 +158,16 @@ class FFP:
     def getFeature(self, feature):
         f = 0
         if (feature == "EDGE_DENSITY"):
-            n = len(self.graph)
-            for i in range(len(self.graph)):
-                f = f + sum(self.graph[i])
+            n = len(self.graph_m)
+            for i in range(len(self.graph_m)):
+                f = f + sum(self.graph_m[i])
             f = f / (n * (n - 1))
         elif (feature == "AVG_DEGREE"):
-            n = len(self.graph)
+            n = len(self.graph_m)
             count = 0
             for i in range(len(self.state)):
                 if (self.state[i] == 0):
-                    f += sum(self.graph[i])
+                    f += sum(self.graph_m[i])
                     count += 1
             if (count > 0):
                 f /= count
@@ -163,16 +180,16 @@ class FFP:
                     f += 1
             f = f / len(self.state)
         elif (feature == "BURNING_EDGES"):
-            n = len(self.graph)
-            for i in range(len(self.graph)):
-                for j in range(len(self.graph[i])):
-                    if (self.state[i] == -1 and self.graph[i][j] == 1):
+            n = len(self.graph_m)
+            for i in range(len(self.graph_m)):
+                for j in range(len(self.graph_m[i])):
+                    if (self.state[i] == -1 and self.graph_m[i][j] == 1):
                         f += 1
             f = f / (n * (n - 1))
         elif (feature == "NODES_IN_DANGER"):
             for j in range(len(self.state)):
                 for i in range(len(self.state)):
-                    if (self.state[i] == -1 and self.graph[i][j] == 1):
+                    if (self.state[i] == -1 and self.graph_m[i][j] == 1):
                         f += 1
                         break
             f /= len(self.state)
@@ -191,7 +208,7 @@ class FFP:
         text += "state = " + str(self.state) + "\n"
         for i in range(self.n):
             for j in range(self.n):
-                if (self.graph[i][j] == 1 and i < j):
+                if (self.graph_m[i][j] == 1 and i < j):
                     text += "\t" + str(i) + " - " + str(j) + "\n"
         return text
 
