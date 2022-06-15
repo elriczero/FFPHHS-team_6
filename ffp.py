@@ -95,7 +95,9 @@ class FFP:
         # Mark the current node as visited
         # and print it
         visited.add(v)
-        print(v, end=' ')
+        # print(v, end=' ')
+        print(" -> {}".format(v), end ="")
+        # print(" -> {}".format(j), end ="")
  
         # Recur for all the vertices
         # adjacent to this vertex
@@ -394,9 +396,13 @@ fileName = "instances/BBGRL/50_ep0.2_0_gilbert_1.in"
 
 # Solves the problem using heuristic GDEG and one firefighter
 problem = FFP(fileName)
-problem.print_adjacency_list()
+# problem.print_adjacency_list()
 
 problem.DFS(0)
+# for i in range(49):
+#     print("Start node {}".format(i))
+#     problem.DFS(i)
+#     print("\n")
 
 # print("GDEG = " + str(problem.solve("GDEG", 1, True)))
 
