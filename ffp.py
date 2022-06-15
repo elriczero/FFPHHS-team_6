@@ -35,6 +35,10 @@ class FFP:
             self.graph_m[x][y] = 1
             self.graph_m[y][x] = 1
         self.graph_l = self.convert_adjacency_matrix_to_list()    # graph as an adjacency list
+        # Create backbone to use the Heuristics
+        self.backbone = []
+        self.DFS(0)
+        
         
     def convert_adjacency_matrix_to_list(self):
         graph_m = self.graph_m
@@ -96,9 +100,11 @@ class FFP:
         # and print it
         visited.add(v)
         # print(v, end=' ')
-        print(" -> {}".format(v), end ="")
+        # print(" -> {}".format(v), end ="")
         # print(" -> {}".format(j), end ="")
+        self.backbone.append(v)
  
+
         # Recur for all the vertices
         # adjacent to this vertex
         for neighbour in self.graph_l[v]:
@@ -398,11 +404,8 @@ fileName = "instances/BBGRL/50_ep0.2_0_gilbert_1.in"
 problem = FFP(fileName)
 # problem.print_adjacency_list()
 
-problem.DFS(0)
-# for i in range(49):
-#     print("Start node {}".format(i))
-#     problem.DFS(i)
-#     print("\n")
+print(problem.backbone)
+
 
 # print("GDEG = " + str(problem.solve("GDEG", 1, True)))
 
