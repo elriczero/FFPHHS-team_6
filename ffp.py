@@ -3,7 +3,80 @@ import math
 from collections import defaultdict
 # Provides the methods to create and solve the firefighter problem
 
+# Function to find the shortest
+# path between two nodes of a graph
+def BFS_SP(graph, start, goal):
+    explored = []
+     
+    # Queue for traversing the
+    # graph in the BFS
+    queue = [[start]]
+     
+    # If the desired node is
+    # reached
+    if start == goal:
+        print("Same Node")
+        return queue
+     
+    # Loop to traverse the graph
+    # with the help of the queue
+    while queue:
+        path = queue.pop(0)
+        node = path[-1]
+         
+        # Condition to check if the
+        # current node is not visited
+        if node not in explored:
+            neighbours = graph[node]
+             
+            # Loop to iterate over the
+            # neighbours of the node
+            for neighbour in neighbours:
+                new_path = list(path)
+                new_path.append(neighbour)
+                queue.append(new_path)
+                 
+                # Condition to check if the
+                # neighbour node is the goal
+                if neighbour == goal:
+                    # print("Shortest path = ", *new_path)
+                    return new_path
+            explored.append(node)
+ 
+    # Condition when the nodes
+    # are not connected
+    print("So sorry, but a connecting"\
+                "path doesn't exist :(")
+    return None
 
+
+#Provide a class to save the Node information to increase readibility
+class Node:
+    def __init__(self, id) -> None:
+        self.id = id    # Node Id [String]
+        self.degree = 0 # Degree of the Node
+        self.state = None   # State of the Node
+                            #   -1 On fire
+                            #   0 Available for analysis
+                            #   1 Protected
+        self.adjacent_nodes = None  # List of the adjacent nodes
+        self.distance_to_burning_node = -1  # Distance to the closest burning node
+        self.next_to_burning_node = False
+        pass
+    
+    def update_state(self,new_state):
+        self.state = new_state
+    
+    def update_degree(self, new_degree):
+        self.degree = new_degree
+    
+    def update_adjacent_nodes(self, n_adjacent_nodes):
+        self.adjacent_nodes = n_adjacent_nodes
+    
+    def update_distance_to_burning_node(self, new_distance):
+        self.distance_to_burning_node = new_distance
+
+# Provides the methods to create and solve the firefighter problem
 class FFP:
 
     # Constructor
@@ -14,6 +87,7 @@ class FFP:
         tokens = text.split()
         seed = int(tokens.pop(0))
         self.n = int(tokens.pop(0))
+        self.nodes = []
         self.debug_position = list(range(self.n))
         model = int(tokens.pop(0))
         int(tokens.pop(0))  # Ignored
@@ -38,8 +112,50 @@ class FFP:
         # Create backbone to use the Heuristics
         self.backbone = []
         self.DFS(0)
+        self.create_nodes()
         
         
+    def create_nodes(self):
+        for index in range(self.n):
+            degree = sum(self.graph_m[index])
+            node = Node(index)
+            node.update_degree(degree)
+            if self.state[index] != 0:
+                node.update_state(self.state[index])
+            node.update_adjacent_nodes(self.graph_l[index])
+            self.nodes.append(node)
+    
+    def calculate_node_burning_distance(self, node):
+        # Save burning nodes in a list
+        burning_nodes = []
+        for index in range(self.n):
+            if self.state[index] == -1:
+                burning_nodes.append(index)
+        minimun_distance = self.n
+        # Start checking paths to burning nodes
+        for burning_node in burning_nodes:
+            path = BFS_SP(self.graph_l, node.id, burning_node)
+            if len(path) < minimun_distance:
+                minimun_distance = len(path)
+        return minimun_distance
+
+
+    def update_nodes(self):
+        for index in range(self.n):
+            node = self.nodes[index]
+            state = self.state[index]
+            # Update the state of the node if there is an update in the state
+            if node.state != state:
+                node.state = state
+                if node.state == 0:
+                    # Check if node is next to burning node
+                    for next_node in node.adjacent_nodes:
+                        if next_node == -1:
+                            node.next_to_burning_node = True
+                    # Check distance to new burning nodes
+                    min_dist = self.calculate_node_burning_distance(node)
+                    node.update_distance_to_burning_node(min_dist)
+
     def convert_adjacency_matrix_to_list(self):
         graph_m = self.graph_m
         adjacency_l = defaultdict(list)
@@ -132,6 +248,7 @@ class FFP:
             print("Initial state:" + str(self.state))
         t = 0
         while (spreading):
+            self.update_nodes()
             if (debug):
                 print("Pos:  " + str(self.debug_position))
                 print("State:" + str(self.state))
