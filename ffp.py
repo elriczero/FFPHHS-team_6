@@ -1,7 +1,10 @@
 import random
 import math
 from collections import defaultdict
-# Provides the methods to create and solve the firefighter problem
+# import enum
+# from turtle import update
+
+# from pyparsing import identbodychars
 
 # Function to find the shortest
 # path between two nodes of a graph
@@ -49,6 +52,51 @@ def BFS_SP(graph, start, goal):
                 "path doesn't exist :(")
     return None
 
+class simple_HyperHeuristic:
+ # Constructor
+    #   features = A list with the names of the features to be used by this hyper-heuristic
+    #   heuristics = A list with the names of the heuristics to be used by this hyper-heuristic
+    def __init__(self, features, heuristics) -> None:
+        if (features):
+            self.features = features.copy()
+        else:
+            print("=====================")
+            print("Critical error at HyperHeuristic.__init__.")
+            print("The list of features cannot be empty.")
+            print("The system will halt.")
+            print("=====================")
+            exit(0)
+        if (heuristics):
+            self.heuristics = heuristics.copy()
+        else:
+            print("=====================")
+            print("Critical error at HyperHeuristic.__init__.")
+            print("The list of heuristics cannot be empty.")
+            print("The system will halt.")
+            print("=====================")
+            exit(0)
+
+    # Returns the next heuristic to use
+    #   problem = The FFP instance being solved
+    def nextHeuristic(self, problem):
+        print("=====================")
+        print("Critical error at HyperHeuristic.nextHeuristic.")
+        print("The method has not been overriden by a valid subclass.")
+        print("The system will halt.")
+        print("=====================")
+        exit(0)
+
+class DummyHyperHeuristic_team6(simple_HyperHeuristic):
+
+    # Constructor
+    #   features = A list with the names of the features to be used by this hyper-heuristic
+    #   heuristics = A list with the names of the heuristics to be used by this hyper-heuristic
+    #   nbRules = The number of rules to be contained in this hyper-heuristic
+    def __init__(self, features, heuristics):
+        super().__init__(features, heuristics)
+    
+    def get_heuristics(self):
+        return self.heuristics
 
 #Provide a class to save the Node information to increase readibility
 class Node:
@@ -113,8 +161,10 @@ class FFP:
         self.backbone = []
         self.DFS(0)
         self.create_nodes()
+        self.FD = False
+        self.DD = False
         
-        
+    
     def create_nodes(self):
         for index in range(self.n):
             degree = sum(self.graph_m[index])
@@ -139,7 +189,6 @@ class FFP:
                 minimun_distance = len(path)
         return minimun_distance
 
-
     def update_nodes(self):
         for index in range(self.n):
             node = self.nodes[index]
@@ -150,7 +199,7 @@ class FFP:
                 if node.state == 0:
                     # Check if node is next to burning node
                     for next_node in node.adjacent_nodes:
-                        if next_node == -1:
+                        if self.state[next_node] == -1:
                             node.next_to_burning_node = True
                     # Check distance to new burning nodes
                     min_dist = self.calculate_node_burning_distance(node)
@@ -164,6 +213,35 @@ class FFP:
                 if graph_m[i][j] != 0:
                     adjacency_l[i].append(j)
         return adjacency_l
+
+    
+    def select_heuristic(self, heuristics):
+        FD_v = False
+        DD_v = False
+        MaxFireDistance = -1
+        MaxNodeDegree = -1
+        for index in range(self.n):
+            node = self.nodes[index]
+            if node.state == 0:
+                degree = node.degree
+                distance = node.distance_to_burning_node
+                if degree > MaxNodeDegree:
+                    MaxNodeDegree = degree
+                if distance > MaxFireDistance:
+                    MaxFireDistance = distance
+        if MaxFireDistance >= 2:
+            FD_v = True
+        if MaxNodeDegree >= 2:
+            DD_v = True
+        
+        if DD_v and FD_v:
+            if "GDEG" in heuristics:
+                return "GDEG"
+        if DD_v:
+            if "BBG" in heuristics:
+                return "BBG"
+        return "LDEG"
+
 
     def print_adjacency_list(self):
         for i in self.graph_l:
@@ -267,8 +345,14 @@ class FFP:
             # It protects the nodes (based on the number of available firefighters)
             for i in range(nbFighters):
                 heuristic = method
-                if (isinstance(method, HyperHeuristic)):
-                    heuristic = method.nextHeuristic(self)
+                # if (isinstance(method, HyperHeuristic)):
+                #     heuristic = method.nextHeuristic(self)
+                # node = self.__nextNode(heuristic)
+                if (isinstance(method, simple_HyperHeuristic)):
+                    heuristics = method.get_heuristics()
+                    heuristic = self.select_heuristic(heuristics)
+                    if debug:
+                        print("Selected heuristic is: {}".format(heuristic))
                 node = self.__nextNode(heuristic)
                 if (node >= 0):
                     # The node is protected
@@ -319,7 +403,7 @@ class FFP:
         for i in range(len(self.state)):
             if (self.state[i] == 0):
                 if (heuristic == "LDEG"):
-                    print("LDEG")
+                    # print("LDEG")
                     # It prefers the node with the largest degree, but it only considers
                     # the nodes directly connected to a node on fire
                     for j in range(len(self.graph_m[i])):
@@ -329,7 +413,7 @@ class FFP:
                 elif (heuristic == "GDEG"):
                     value = sum(self.graph_m[i])
                 elif (heuristic == "BBG"):
-                    print("BBG\n")
+                    # print("BBG")
                     if i in self.backbone:
                         value = sum(self.graph_m[i])
                 else:
@@ -513,6 +597,9 @@ class DummyHyperHeuristic(HyperHeuristic):
         distance = math.sqrt(distance)
         return distance
 
+
+
+
 # Tests
 # =====================
 
@@ -525,19 +612,28 @@ fileName = "instances/BBGRL/50_ep0.2_0_gilbert_1.in"
 # Solves the problem using heuristic GDEG and one firefighter
 problem = FFP(fileName)
 # problem.print_adjacency_list()
+p = BFS_SP(problem.graph_l, 0, 1)
+print(type(p))
+print(p)
 
-print(problem.backbone)
+problem.graph_l
+# print(problem.backbone)
 
-print("BBG = " + str(problem.solve("BBG", 1, True)))
-
-
+# print("BBG = " + str(problem.solve("BBG", 1, True)))
 # print("GDEG = " + str(problem.solve("GDEG", 1, True)))
 
 # # Solves the problem using a randomly generated dummy hyper-heuristic
 # problem = FFP(fileName)
-# seed = random.randint(0, 1000)
-# print(seed)
+
+seed = random.randint(0, 1000)
+print(seed)
+
 # hh = DummyHyperHeuristic(["EDGE_DENSITY", "BURNING_NODES", "NODES_IN_DANGER"], [
-#                          "LDEG", "GDEG"], 2, seed)
+#                          "LDEG", "GDEG","BBG"], 2, seed)
 # print(hh)
 # print("Dummy HH = " + str(problem.solve(hh, 1, True)))
+
+hh = DummyHyperHeuristic_team6(["EDGE_DENSITY", "BURNING_NODES", "NODES_IN_DANGER"], [
+                         "LDEG", "GDEG","BBG"])
+# print(hh)
+print("Dummy HH = " + str(problem.solve(hh, 1, True)))
